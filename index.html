@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Steal the branrot</title><meta name="title" content="Steal the branrot"><meta charset="UTF-8">
+<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>Steal the branrot (Big update v8)</title><meta name="title" content="Steal the branrot (Big update v8)"><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="./style.css"><script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script><script type="importmap">{
   "imports": {}
 }</script></head><body>
@@ -35,11 +35,35 @@
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
       cursor: pointer;
     }
+
+    #newsBtn {
+      position: absolute;
+      top: 70px; /* Jarak dari atas */
+      right: 20px; /* Jarak dari kanan */
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      color: white;
+      padding: 10px 16px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #newsBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.8);
+    }
   </style>
 
 
 
   <h1>🗿 STEAL THE BRAINROT 🗿</h1>
+
+  <a href="https://qermoris.github.io/aboutisd/" target="_blank" id="newsBtn">
+    📰 News &amp; info
+  </a>
 
   <!-- 1. Canvas DULU -->
   <canvas id="gameCanvas" width="600" height="400"></canvas>
@@ -49,7 +73,8 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  let money = 0;
+  let money = parseInt(localStorage.getItem('savedMoney')) || 0;
+  let isBlackout = false;
   let emojiSize = 50;
   let hasGodBrainrotSpawned = false; // Penanda God Brainrot
 
@@ -59,7 +84,7 @@
     { emoji: '🍷', value: 25 },
     { emoji: '🤡', value: 50 },
     { emoji: '🧢', value: 75 },
-    { emoji: '🥸', value: 100 }
+    { emoji: '🥸', value: 100 },
   ];
 
   let brainrot = {
@@ -67,7 +92,7 @@
     y: 200,
     emoji: '🗿',
     value: 10,
-    isGod: false
+    type: 'normal'
   };
 
   function moveBrainrot() {
@@ -79,27 +104,56 @@
     if (chance < 5 && !hasGodBrainrotSpawned) {
       brainrot.emoji = '👾';
       brainrot.value = 450;
-      brainrot.isGod = true;
+      brainrot.type = 'god';
       hasGodBrainrotSpawned = true;
-    } else if (chance < 10) {
+    } else if (chance >= 5 && chance < 10) {
+      // Event: the golden boset
+      brainrot.emoji = '🔱';
+      brainrot.value = 45700;
+      brainrot.type = 'boset';
+
+      isBlackout = true;
+      draw();
+
+      setTimeout(function() {
+        isBlackout = false;
+        draw();
+      }, 3000);
+
+    } else if (chance < 20) {
       brainrot.emoji = '✨🗿✨';
       brainrot.value = 1000;
-      brainrot.isGod = false;
+      brainrot.type = 'golden';
     } else {
       let randomIndex = Math.floor(Math.random() * brainrotTypes.length);
       brainrot.emoji = brainrotTypes[randomIndex].emoji;
       brainrot.value = brainrotTypes[randomIndex].value;
-      brainrot.isGod = false;
+      brainrot.type = 'normal';
     }
   }
 
   function draw() {
+    // 1. Semak jika skrin sedang blackout
+    if (isBlackout) {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ff0000';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠️ SOMETHING IS COMING... ⚠️', canvas.width / 2, canvas.height / 2);
+      ctx.textAlign = 'left';
+      return;
+    }
+
+    // 2. Lukis Latar Belakang Biasa
     let gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#1a1c2e');
     gradient.addColorStop(1, '#130f40');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // 3. Banner Duit
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.beginPath();
     ctx.roundRect(15, 10, 220, 45, 10);
@@ -112,9 +166,13 @@
     ctx.font = 'bold 22px Arial';
     ctx.fillText('💰 Money: $' + money, 25, 40);
 
-    if (brainrot.isGod) {
+    // 4. Setkan Glow Mengikut Jenis Emoji
+    if (brainrot.type === 'god') {
       ctx.shadowColor = '#ffd700';
       ctx.shadowBlur = 25;
+    } else if (brainrot.type === 'boset') {
+      ctx.shadowColor = '#8b008b'; 
+      ctx.shadowBlur = 35;
     } else {
       ctx.shadowColor = '#00f2fe';
       ctx.shadowBlur = 15;
@@ -123,12 +181,20 @@
     ctx.font = emojiSize + 'px Arial';
     ctx.fillText(brainrot.emoji, brainrot.x, brainrot.y);
 
-    if (brainrot.isGod) {
+    // 5. Teks Nama di Bawah Emoji
+    if (brainrot.type === 'god') {
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 14px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('the god brainrot', brainrot.x + (emojiSize / 2), brainrot.y + 20);
+      ctx.textAlign = 'left';
+    } else if (brainrot.type === 'boset') {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ff007f';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('The golden boset', brainrot.x + (emojiSize / 2), brainrot.y + 20);
       ctx.textAlign = 'left';
     }
 
@@ -136,6 +202,8 @@
   }
 
   canvas.addEventListener('click', function(event) {
+    if (isBlackout) return;
+
     const rect = canvas.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
@@ -146,7 +214,20 @@
       clickY >= brainrot.y - emojiSize &&
       clickY <= brainrot.y
     ) {
+      // Semakan Khas untuk The Golden Boset
+      if (brainrot.type === 'boset') {
+        if (money < brainrot.value) {
+          alert("Sorry you can't having!");
+          moveBrainrot();
+          draw();
+          return;
+        }
+      }
+
+      // Jika cukup duit atau emoji biasa
       money += brainrot.value;
+      localStorage.setItem('savedMoney', money);
+
       moveBrainrot();
       draw();
     }
